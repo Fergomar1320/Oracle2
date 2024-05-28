@@ -43,10 +43,11 @@ public class ToDoItemService {
         Optional<ToDoItem> toDoItemData = toDoItemRepository.findById(id);
         if(toDoItemData.isPresent()){
             ToDoItem toDoItem = toDoItemData.get();
-            toDoItem.setID(id);
-            toDoItem.setCreation_ts(td.getCreation_ts());
-            toDoItem.setDescription(td.getDescription());
-            toDoItem.setDone(td.isDone());
+            toDoItem.setItemId(id);
+            toDoItem.setItemCreationTs(td.getItemCreationTs());
+            toDoItem.setItemDeadline(td.getItemDeadline());
+            toDoItem.setItemDescription(td.getItemDescription());
+            toDoItem.setItemStatus(td.getItemStatus());
             return toDoItemRepository.save(toDoItem);
         }else{
             return null;
