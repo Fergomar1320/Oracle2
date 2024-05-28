@@ -173,7 +173,7 @@ function App() {
       }).then(
         (result) => {
           var id = result.headers.get('location');
-          var newItem = {"id": id, "description": text}
+          var newItem = {"item_id": id, "item_description": text}
           setItems([newItem, ...items]);
           setInserting(false);
         },
