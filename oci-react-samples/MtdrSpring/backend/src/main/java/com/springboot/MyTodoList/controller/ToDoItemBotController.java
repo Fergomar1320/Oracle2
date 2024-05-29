@@ -2,7 +2,9 @@ package com.springboot.MyTodoList.controller;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -20,8 +22,11 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRem
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import com.springboot.MyTodoList.model.OracleUser;
 import com.springboot.MyTodoList.model.ToDoItem;
+import com.springboot.MyTodoList.service.AuthenticationService;
 import com.springboot.MyTodoList.service.ToDoItemService;
+import com.springboot.MyTodoList.service.OracleUserService;
 import com.springboot.MyTodoList.util.BotCommands;
 import com.springboot.MyTodoList.util.BotHelper;
 import com.springboot.MyTodoList.util.BotLabels;
@@ -29,269 +34,258 @@ import com.springboot.MyTodoList.util.BotMessages;
 
 public class ToDoItemBotController extends TelegramLongPollingBot {
 
-	private static final Logger logger = LoggerFactory.getLogger(ToDoItemBotController.class);
-	private ToDoItemService toDoItemService;
-	private String botName;
+    private static final Logger logger = LoggerFactory.getLogger(ToDoItemBotController.class);
+    private ToDoItemService toDoItemService;
+    private AuthenticationService authenticationService;
+    private OracleUserService oracleUserService;
+    private Map<Long, OracleUser> authenticatedUsers = new HashMap<>();
+    private String botName;
 
-	public ToDoItemBotController(String botToken, String botName, ToDoItemService toDoItemService) {
-		super(botToken);
-		logger.info("Bot Token: " + botToken);
-		logger.info("Bot name: " + botName);
-		this.toDoItemService = toDoItemService;
-		this.botName = botName;
-	}
+    public ToDoItemBotController(String botToken, String botName, ToDoItemService toDoItemService, AuthenticationService authenticationService, OracleUserService oracleUserService) {
+        super(botToken);
+        this.authenticationService = authenticationService;
+        this.toDoItemService = toDoItemService;
+        this.oracleUserService = oracleUserService;
+        this.botName = botName;
+    }
 
-	@Override
-	public void onUpdateReceived(Update update) {
+    @Override
+    public void onUpdateReceived(Update update) {
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            String messageTextFromTelegram = update.getMessage().getText();
+            long chatId = update.getMessage().getChatId();
 
-		if (update.hasMessage() && update.getMessage().hasText()) {
+            // Manejo de comandos de autenticación
+            if (messageTextFromTelegram.startsWith("/login")) {
+                handleLogin(messageTextFromTelegram, chatId);
+            } else if (authenticatedUsers.containsKey(chatId)) {
+                // Procesar otros comandos solo si el usuario está autenticado
+                handleCommands(messageTextFromTelegram, chatId);
+            } else {
+                sendMessage(chatId, "Please login using /login <USER_ID>");
+            }
+        }
+    }
 
-			String messageTextFromTelegram = update.getMessage().getText();
-			long chatId = update.getMessage().getChatId();
+    private void handleLogin(String messageText, long chatId) {
+        String[] parts = messageText.split(" ");
+        if (parts.length == 2) {
+            try {
+                Long userId = Long.valueOf(parts[1]);
+                OracleUser user = authenticationService.authenticate(userId);
+                if (user != null) {
+                    user.setUserChatId(String.valueOf(chatId));
+                    oracleUserService.updateUser(user);
+                    authenticatedUsers.put(chatId, user);
+                    sendMessage(chatId, "Login successful. Welcome " + user.getUserName() + "!");
+                } else {
+                    sendMessage(chatId, "Login failed. User ID not found.");
+                }
+            } catch (NumberFormatException e) {
+                sendMessage(chatId, "Invalid USER_ID format. Use: /login <USER_ID>");
+            }
+        } else {
+            sendMessage(chatId, "Invalid login command. Use: /login <USER_ID>");
+        }
+    }
 
-			if (messageTextFromTelegram.equals(BotCommands.START_COMMAND.getCommand())
-					|| messageTextFromTelegram.equals(BotLabels.SHOW_MAIN_SCREEN.getLabel())) {
+    private void handleCommands(String messageText, long chatId) {
+        OracleUser user = authenticatedUsers.get(chatId);
+        if (authenticationService.isManager(user)) {
+            // Manejar comandos para Manager
+            handleManagerCommands(messageText, chatId);
+        } else if (authenticationService.isDeveloper(user)) {
+            // Manejar comandos para Developer
+            handleDeveloperCommands(messageText, chatId, user);
+        } else {
+            sendMessage(chatId, "Unauthorized role.");
+        }
+    }
 
-				SendMessage messageToTelegram = new SendMessage();
-				messageToTelegram.setChatId(chatId);
-				messageToTelegram.setText(BotMessages.HELLO_MYTODO_BOT.getMessage());
+    private void handleManagerCommands(String messageText, long chatId) {
+        if (messageText.equals("/start") || messageText.equals(BotLabels.SHOW_MAIN_SCREEN.getLabel())) {
+            sendMainMenu(chatId);
+        } else if (messageText.equals("/viewAllTasks")) {
+            List<ToDoItem> allItems = getAllToDoItems();
+            String tasks = allItems.stream().map(ToDoItem::getItemDescription).collect(Collectors.joining("\n"));
+            sendMessage(chatId, tasks);
+        } else if (messageText.startsWith("/viewTasksForDev ")) {
+            String devName = messageText.substring(17);
+            List<ToDoItem> devTasks = getTasksForDeveloper(devName);
+            String tasks = devTasks.stream().map(ToDoItem::getItemDescription).collect(Collectors.joining("\n"));
+            sendMessage(chatId, tasks);
+        } else {
+            sendMessage(chatId, "Manager command received: " + messageText);
+        }
+    }
 
-				ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-				List<KeyboardRow> keyboard = new ArrayList<>();
+    private void handleDeveloperCommands(String messageText, long chatId, OracleUser user) {
+        if (messageText.equals("/start") || messageText.equals(BotLabels.SHOW_MAIN_SCREEN.getLabel())) {
+            sendMainMenu(chatId);
+        } else if (messageText.startsWith("/createTask ")) {
+            String taskDescription = messageText.substring(12);
+            createTask(chatId, user, taskDescription);
+        } else if (messageText.startsWith("/updateTask ")) {
+            String[] parts = messageText.substring(12).split(" ", 2);
+            int taskId = Integer.parseInt(parts[0]);
+            String taskDescription = parts[1];
+            updateTask(chatId, taskId, taskDescription);
+        } else if (messageText.startsWith("/markDone ")) {
+            int taskId = Integer.parseInt(messageText.substring(10));
+            markTaskDone(chatId, taskId);
+        } else if (messageText.equals("/viewMyTasks")) {
+            List<ToDoItem> userTasks = getTasksForUser(user);
+            String tasks = userTasks.stream().map(ToDoItem::getItemDescription).collect(Collectors.joining("\n"));
+            sendMessage(chatId, tasks);
+        } else {
+            sendMessage(chatId, "Developer command received: " + messageText);
+        }
+    }
 
-				// first row
-				KeyboardRow row = new KeyboardRow();
-				row.add(BotLabels.LIST_ALL_ITEMS.getLabel());
-				row.add(BotLabels.ADD_NEW_ITEM.getLabel());
-				// Add the first row to the keyboard
-				keyboard.add(row);
+    private void sendMainMenu(long chatId) {
+        SendMessage messageToTelegram = new SendMessage();
+        messageToTelegram.setChatId(chatId);
+        messageToTelegram.setText(BotMessages.HELLO_MYTODO_BOT.getMessage());
 
-				// second row
-				row = new KeyboardRow();
-				row.add(BotLabels.SHOW_MAIN_SCREEN.getLabel());
-				row.add(BotLabels.HIDE_MAIN_SCREEN.getLabel());
-				keyboard.add(row);
+        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+        List<KeyboardRow> keyboard = new ArrayList<>();
 
-				// Set the keyboard
-				keyboardMarkup.setKeyboard(keyboard);
+        // First row
+        KeyboardRow row = new KeyboardRow();
+        row.add(BotLabels.LIST_ALL_ITEMS.getLabel());
+        row.add(BotLabels.ADD_NEW_ITEM.getLabel());
+        keyboard.add(row);
 
-				// Add the keyboard markup
-				messageToTelegram.setReplyMarkup(keyboardMarkup);
+        // Second row
+        row = new KeyboardRow();
+        row.add(BotLabels.SHOW_MAIN_SCREEN.getLabel());
+        row.add(BotLabels.HIDE_MAIN_SCREEN.getLabel());
+        keyboard.add(row);
 
-				try {
-					execute(messageToTelegram);
-				} catch (TelegramApiException e) {
-					logger.error(e.getLocalizedMessage(), e);
-				}
+        // Set the keyboard
+        keyboardMarkup.setKeyboard(keyboard);
 
-			} else if (messageTextFromTelegram.indexOf(BotLabels.DONE.getLabel()) != -1) {
+        // Add the keyboard markup
+        messageToTelegram.setReplyMarkup(keyboardMarkup);
 
-				String done = messageTextFromTelegram.substring(0,
-						messageTextFromTelegram.indexOf(BotLabels.DASH.getLabel()));
-				Integer id = Integer.valueOf(done);
+        try {
+            execute(messageToTelegram);
+        } catch (TelegramApiException e) {
+            logger.error(e.getLocalizedMessage(), e);
+        }
+    }
 
-				try {
+    private void sendMessage(long chatId, String text) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(text);
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
 
-					ToDoItem item = getToDoItemById(id).getBody();
-					item.setItemStatus("Done");
-					updateToDoItem(item, id);
-					BotHelper.sendMessageToTelegram(chatId, BotMessages.ITEM_DONE.getMessage(), this);
+    @Override
+    public String getBotUsername() {        
+        return botName;
+    }
 
-				} catch (Exception e) {
-					logger.error(e.getLocalizedMessage(), e);
-				}
+    // GET /todolist
+    public List<ToDoItem> getAllToDoItems() { 
+        return toDoItemService.findAll();
+    }
 
-			} else if (messageTextFromTelegram.indexOf(BotLabels.UNDO.getLabel()) != -1) {
+    // GET tasks for a specific developer
+    public List<ToDoItem> getTasksForDeveloper(String developerName) {
+        return toDoItemService.findTasksByDeveloperName(developerName);
+    }
 
-				String undo = messageTextFromTelegram.substring(0,
-						messageTextFromTelegram.indexOf(BotLabels.DASH.getLabel()));
-				Integer id = Integer.valueOf(undo);
+    // GET tasks for a specific user
+    public List<ToDoItem> getTasksForUser(OracleUser user) {
+        return toDoItemService.findTasksByUserId(user.getUserId());
+    }
 
-				try {
+    // GET BY ID /todolist/{id}
+    public ResponseEntity<ToDoItem> getToDoItemById(@PathVariable int id) {
+        try {
+            ResponseEntity<ToDoItem> responseEntity = toDoItemService.getItemById(id);
+            return new ResponseEntity<ToDoItem>(responseEntity.getBody(), HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error(e.getLocalizedMessage(), e);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 
-					ToDoItem item = getToDoItemById(id).getBody();
-					item.setItemStatus("In Progress");;
-					updateToDoItem(item, id);
-					BotHelper.sendMessageToTelegram(chatId, BotMessages.ITEM_UNDONE.getMessage(), this);
+    // PUT /todolist
+    public ResponseEntity addToDoItem(@RequestBody ToDoItem todoItem) throws Exception {
+        ToDoItem td = toDoItemService.addToDoItem(todoItem);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("location", "" + td.getItemId());
+        responseHeaders.set("Access-Control-Expose-Headers", "location");
+        return ResponseEntity.ok().headers(responseHeaders).build();
+    }
 
-				} catch (Exception e) {
-					logger.error(e.getLocalizedMessage(), e);
-				}
+    // UPDATE /todolist/{id}
+    public ResponseEntity updateToDoItem(@RequestBody ToDoItem toDoItem, @PathVariable int id) {
+        try {
+            ToDoItem toDoItem1 = toDoItemService.updateToDoItem(id, toDoItem);
+            return new ResponseEntity<>(toDoItem1, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error(e.getLocalizedMessage(), e);
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+    }
 
-			} else if (messageTextFromTelegram.indexOf(BotLabels.DELETE.getLabel()) != -1) {
+    // DELETE todolist/{id}
+    public ResponseEntity<Boolean> deleteToDoItem(@PathVariable("id") int id) {
+        Boolean flag = false;
+        try {
+            flag = toDoItemService.deleteToDoItem(id);
+            return new ResponseEntity<>(flag, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error(e.getLocalizedMessage(), e);
+            return new ResponseEntity<>(flag, HttpStatus.NOT_FOUND);
+        }
+    }
 
-				String delete = messageTextFromTelegram.substring(0,
-						messageTextFromTelegram.indexOf(BotLabels.DASH.getLabel()));
-				Integer id = Integer.valueOf(delete);
+    // Métodos para los comandos específicos de Developer
+    private void createTask(long chatId, OracleUser user, String taskDescription) {
+        try {
+            ToDoItem newItem = new ToDoItem();
+            newItem.setItemDescription(taskDescription);
+            newItem.setItemCreationTs(OffsetDateTime.now());
+            newItem.setItemStatus("Not Started");
+            newItem.setUser(user);
+            addToDoItem(newItem);
+            sendMessage(chatId, "Task created successfully.");
+        } catch (Exception e) {
+            logger.error(e.getLocalizedMessage(), e);
+            sendMessage(chatId, "Failed to create task.");
+        }
+    }
 
-				try {
+    private void updateTask(long chatId, int taskId, String taskDescription) {
+        try {
+            ToDoItem item = getToDoItemById(taskId).getBody();
+            item.setItemDescription(taskDescription);
+            updateToDoItem(item, taskId);
+            sendMessage(chatId, "Task updated successfully.");
+        } catch (Exception e) {
+            logger.error(e.getLocalizedMessage(), e);
+            sendMessage(chatId, "Failed to update task.");
+        }
+    }
 
-					deleteToDoItem(id).getBody();
-					BotHelper.sendMessageToTelegram(chatId, BotMessages.ITEM_DELETED.getMessage(), this);
-
-				} catch (Exception e) {
-					logger.error(e.getLocalizedMessage(), e);
-				}
-
-			} else if (messageTextFromTelegram.equals(BotCommands.HIDE_COMMAND.getCommand())
-					|| messageTextFromTelegram.equals(BotLabels.HIDE_MAIN_SCREEN.getLabel())) {
-
-				BotHelper.sendMessageToTelegram(chatId, BotMessages.BYE.getMessage(), this);
-
-			} else if (messageTextFromTelegram.equals(BotCommands.TODO_LIST.getCommand())
-					|| messageTextFromTelegram.equals(BotLabels.LIST_ALL_ITEMS.getLabel())
-					|| messageTextFromTelegram.equals(BotLabels.MY_TODO_LIST.getLabel())) {
-
-				List<ToDoItem> allItems = getAllToDoItems();
-				ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-				List<KeyboardRow> keyboard = new ArrayList<>();
-
-				// command back to main screen
-				KeyboardRow mainScreenRowTop = new KeyboardRow();
-				mainScreenRowTop.add(BotLabels.SHOW_MAIN_SCREEN.getLabel());
-				keyboard.add(mainScreenRowTop);
-
-				KeyboardRow firstRow = new KeyboardRow();
-				firstRow.add(BotLabels.ADD_NEW_ITEM.getLabel());
-				keyboard.add(firstRow);
-
-				KeyboardRow myTodoListTitleRow = new KeyboardRow();
-				myTodoListTitleRow.add(BotLabels.MY_TODO_LIST.getLabel());
-				keyboard.add(myTodoListTitleRow);
-
-				List<ToDoItem> activeItems = allItems.stream().filter(item -> item.getItemStatus() != "Done")
-						.collect(Collectors.toList());
-
-				for (ToDoItem item : activeItems) {
-
-					KeyboardRow currentRow = new KeyboardRow();
-					currentRow.add(item.getItemDescription());
-					currentRow.add(item.getItemId() + BotLabels.DASH.getLabel() + BotLabels.DONE.getLabel());
-					keyboard.add(currentRow);
-				}
-
-				List<ToDoItem> doneItems = allItems.stream().filter(item -> item.getItemStatus() == "Done")
-						.collect(Collectors.toList());
-
-				for (ToDoItem item : doneItems) {
-					KeyboardRow currentRow = new KeyboardRow();
-					currentRow.add(item.getItemDescription());
-					currentRow.add(item.getItemId() + BotLabels.DASH.getLabel() + BotLabels.UNDO.getLabel());
-					currentRow.add(item.getItemId() + BotLabels.DASH.getLabel() + BotLabels.DELETE.getLabel());
-					keyboard.add(currentRow);
-				}
-
-				// command back to main screen
-				KeyboardRow mainScreenRowBottom = new KeyboardRow();
-				mainScreenRowBottom.add(BotLabels.SHOW_MAIN_SCREEN.getLabel());
-				keyboard.add(mainScreenRowBottom);
-
-				keyboardMarkup.setKeyboard(keyboard);
-
-				SendMessage messageToTelegram = new SendMessage();
-				messageToTelegram.setChatId(chatId);
-				messageToTelegram.setText(BotLabels.MY_TODO_LIST.getLabel());
-				messageToTelegram.setReplyMarkup(keyboardMarkup);
-
-				try {
-					execute(messageToTelegram);
-				} catch (TelegramApiException e) {
-					logger.error(e.getLocalizedMessage(), e);
-				}
-
-			} else if (messageTextFromTelegram.equals(BotCommands.ADD_ITEM.getCommand())
-					|| messageTextFromTelegram.equals(BotLabels.ADD_NEW_ITEM.getLabel())) {
-				try {
-					SendMessage messageToTelegram = new SendMessage();
-					messageToTelegram.setChatId(chatId);
-					messageToTelegram.setText(BotMessages.TYPE_NEW_TODO_ITEM.getMessage());
-					// hide keyboard
-					ReplyKeyboardRemove keyboardMarkup = new ReplyKeyboardRemove(true);
-					messageToTelegram.setReplyMarkup(keyboardMarkup);
-
-					// send message
-					execute(messageToTelegram);
-
-				} catch (Exception e) {
-					logger.error(e.getLocalizedMessage(), e);
-				}
-
-			}
-
-			else {
-				try {
-					ToDoItem newItem = new ToDoItem();
-					newItem.setItemDescription(messageTextFromTelegram);
-					newItem.setItemCreationTs(OffsetDateTime.now());
-					newItem.setItemStatus("Not Started");
-					ResponseEntity entity = addToDoItem(newItem);
-
-					SendMessage messageToTelegram = new SendMessage();
-					messageToTelegram.setChatId(chatId);
-					messageToTelegram.setText(BotMessages.NEW_ITEM_ADDED.getMessage());
-
-					execute(messageToTelegram);
-				} catch (Exception e) {
-					logger.error(e.getLocalizedMessage(), e);
-				}
-			}
-		}
-	}
-
-	@Override
-	public String getBotUsername() {		
-		return botName;
-	}
-
-	// GET /todolist
-	public List<ToDoItem> getAllToDoItems() { 
-		return toDoItemService.findAll();
-	}
-
-	// GET BY ID /todolist/{id}
-	public ResponseEntity<ToDoItem> getToDoItemById(@PathVariable int id) {
-		try {
-			ResponseEntity<ToDoItem> responseEntity = toDoItemService.getItemById(id);
-			return new ResponseEntity<ToDoItem>(responseEntity.getBody(), HttpStatus.OK);
-		} catch (Exception e) {
-			logger.error(e.getLocalizedMessage(), e);
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-	}
-
-	// PUT /todolist
-	public ResponseEntity addToDoItem(@RequestBody ToDoItem todoItem) throws Exception {
-		ToDoItem td = toDoItemService.addToDoItem(todoItem);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set("location", "" + td.getItemId());
-		responseHeaders.set("Access-Control-Expose-Headers", "location");
-		// URI location = URI.create(""+td.getID())
-
-		return ResponseEntity.ok().headers(responseHeaders).build();
-	}
-
-	// UPDATE /todolist/{id}
-	public ResponseEntity updateToDoItem(@RequestBody ToDoItem toDoItem, @PathVariable int id) {
-		try {
-			ToDoItem toDoItem1 = toDoItemService.updateToDoItem(id, toDoItem);
-			System.out.println(toDoItem1.toString());
-			return new ResponseEntity<>(toDoItem1, HttpStatus.OK);
-		} catch (Exception e) {
-			logger.error(e.getLocalizedMessage(), e);
-			return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-		}
-	}
-
-	// DELETE todolist/{id}
-	public ResponseEntity<Boolean> deleteToDoItem(@PathVariable("id") int id) {
-		Boolean flag = false;
-		try {
-			flag = toDoItemService.deleteToDoItem(id);
-			return new ResponseEntity<>(flag, HttpStatus.OK);
-		} catch (Exception e) {
-			logger.error(e.getLocalizedMessage(), e);
-			return new ResponseEntity<>(flag, HttpStatus.NOT_FOUND);
-		}
-	}
-
+    private void markTaskDone(long chatId, int taskId) {
+        try {
+            ToDoItem item = getToDoItemById(taskId).getBody();
+            item.setItemStatus("Done");
+            updateToDoItem(item, taskId);
+            sendMessage(chatId, "Task marked as done.");
+        } catch (Exception e) {
+            logger.error(e.getLocalizedMessage(), e);
+            sendMessage(chatId, "Failed to mark task as done.");
+        }
+    }
 }
