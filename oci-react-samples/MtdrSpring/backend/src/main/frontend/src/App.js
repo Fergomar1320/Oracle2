@@ -151,7 +151,7 @@ function App() {
       setInserting(true);
       var data = {};
       console.log(data);
-      data.description = text;
+      data.item_description = text; //Fer modified to check if this was the error
       fetch(API_LIST, {
         method: 'POST',
         // We convert the React state to JSON and send it as the POST body
@@ -198,9 +198,9 @@ function App() {
         <table id="itemlistNotDone" className="itemlist">
           <TableBody>
           {items.map(item => (
-            !item.done && (
-            <tr key={item.id}>
-              <td className="description">{item.description}</td>
+            item.item_status != "Done" && (
+            <tr key={item.item_id}>
+              <td className="description">{item.item_description}</td>
               { /*<td>{JSON.stringify(item, null, 2) }</td>*/ }
               <td className="date"><Moment format="MMM Do hh:mm:ss">{item.createdAt}</Moment></td>
               <td><Button variant="contained" className="DoneButton" onClick={(event) => toggleDone(event, item.id, item.description, !item.done)} size="small">
