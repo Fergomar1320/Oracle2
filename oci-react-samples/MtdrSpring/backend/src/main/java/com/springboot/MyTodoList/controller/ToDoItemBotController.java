@@ -38,7 +38,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
     private ToDoItemService toDoItemService;
     private AuthenticationService authenticationService;
     private OracleUserService oracleUserService;
-    private Map<Long, OracleUser> authenticatedUsers = new HashMap<>();
+    private Map<String, OracleUser> authenticatedUsers = new HashMap<>();
     private String botName;
 
     public ToDoItemBotController(String botToken, String botName, ToDoItemService toDoItemService, AuthenticationService authenticationService, OracleUserService oracleUserService) {
@@ -53,7 +53,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageTextFromTelegram = update.getMessage().getText();
-            long chatId = update.getMessage().getChatId();
+            String chatId = update.getMessage().getChatId();
 
             // Manejo de comandos de autenticación
             if (messageTextFromTelegram.startsWith("/login")) {
@@ -67,11 +67,11 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void handleLogin(String messageText, long chatId) {
+    private void handleLogin(String messageText, String chatId) {
         String[] parts = messageText.split(" ");
         if (parts.length == 2) {
             try {
-                Long userId = Long.valueOf(parts[1]);
+                int userId = Integer.valueOf(parts[1]);
                 OracleUser user = authenticationService.authenticate(userId);
                 if (user != null) {
                     user.setUserChatId(String.valueOf(chatId));
@@ -89,7 +89,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void handleCommands(String messageText, long chatId) {
+    private void handleCommands(String messageText, String chatId) {
         OracleUser user = authenticatedUsers.get(chatId);
         if (authenticationService.isManager(user)) {
             // Manejar comandos para Manager
@@ -102,7 +102,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void handleManagerCommands(String messageText, long chatId) {
+    private void handleManagerCommands(String messageText, String chatId) {
         if (messageText.equals("/start") || messageText.equals(BotLabels.SHOW_MAIN_SCREEN.getLabel())) {
             sendMainMenu(chatId);
         } else if (messageText.equals("/viewAllTasks")) {
@@ -119,7 +119,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void handleDeveloperCommands(String messageText, long chatId, OracleUser user) {
+    private void handleDeveloperCommands(String messageText, String chatId, OracleUser user) {
         if (messageText.equals("/start") || messageText.equals(BotLabels.SHOW_MAIN_SCREEN.getLabel())) {
             sendMainMenu(chatId);
         } else if (messageText.startsWith("/createTask ")) {
@@ -142,7 +142,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void sendMainMenu(long chatId) {
+    private void sendMainMenu(String chatId) {
         SendMessage messageToTelegram = new SendMessage();
         messageToTelegram.setChatId(chatId);
         messageToTelegram.setText(BotMessages.HELLO_MYTODO_BOT.getMessage());
@@ -175,7 +175,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void sendMessage(long chatId, String text) {
+    private void sendMessage(String chatId, String text) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(text);
@@ -250,7 +250,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
     }
 
     // Métodos para los comandos específicos de Developer
-    private void createTask(long chatId, OracleUser user, String taskDescription) {
+    private void createTask(String chatId, OracleUser user, String taskDescription) {
         try {
             ToDoItem newItem = new ToDoItem();
             newItem.setItemDescription(taskDescription);
@@ -265,7 +265,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void updateTask(long chatId, int taskId, String taskDescription) {
+    private void updateTask(String chatId, int taskId, String taskDescription) {
         try {
             ToDoItem item = getToDoItemById(taskId).getBody();
             item.setItemDescription(taskDescription);
@@ -277,7 +277,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void markTaskDone(long chatId, int taskId) {
+    private void markTaskDone(String chatId, int taskId) {
         try {
             ToDoItem item = getToDoItemById(taskId).getBody();
             item.setItemStatus("Done");
