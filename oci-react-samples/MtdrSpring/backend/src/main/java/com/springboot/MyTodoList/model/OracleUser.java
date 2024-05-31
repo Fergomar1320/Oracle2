@@ -19,6 +19,9 @@ public class OracleUser implements Serializable {
     @Column(name = "USER_CHAT_ID")
     private String user_chat_id;
 
+    @Column(name = "USER_PWD")
+    private String user_pwd;
+
     @ManyToOne
     @JoinColumn(name = "TEAM_ID", nullable = false)
     private ToDoTeam team;
