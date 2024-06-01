@@ -13,7 +13,7 @@ public class AuthenticationService {
     @Autowired
     private OracleUserRepository oracleUserRepository;
 
-    public OracleUser authenticate(Long userId) {
+    public OracleUser authenticate(int userId) {
         Optional<OracleUser> user = oracleUserRepository.findById(userId);
         return user.orElse(null);
     }
