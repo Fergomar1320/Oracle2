@@ -20,40 +20,52 @@ const Backlog = () => {
   }, []);
 
   return (
-    <div>
-      <h1>Backlog</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>User Name</th>
-            <th>Item ID</th>
-            <th>Item Deadline</th>
-            <th>Item Description</th>
-            <th>Item Status</th>
-            <th>Item Creation TS</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.length > 0 ? (
-            data.map((item, index) => (
-              <tr key={index}>
-                <td>{item.user.userName}</td>
-                <td>{item.itemId}</td>
-                <td>{item.itemDeadline ? new Date(item.itemDeadline).toLocaleString() : 'No Deadline'}</td>
-                <td>{item.itemDescription}</td>
-                <td>{item.itemStatus}</td>
-                <td>{new Date(item.itemCreationTs).toLocaleString()}</td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="6">No data available</td>
+    <div className="View h-screen bg-orange-50 p-8">
+      <h1 className="text-3xl font-bold mb-4">Backlog</h1>
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border border-red-900">
+          <thead>
+            <tr className="bg-red-900 text-orange-50">
+              <th className="py-2 px-4 border-b border-red-900">User Name</th>
+              <th className="py-2 px-4 border-b border-red-900">Item ID</th>
+              <th className="py-2 px-4 border-b border-red-900">Item Deadline</th>
+              <th className="py-2 px-4 border-b border-red-900">Item Description</th>
+              <th className="py-2 px-4 border-b border-red-900">Item Status</th>
+              <th className="py-2 px-4 border-b border-red-900">Item Creation TS</th>
+              <th className="py-2 px-4 border-b border-red-900">Status</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.length > 0 ? (
+              data.map((item, index) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  <td className="py-2 px-4 border-b border-red-900">{item.user.userName}</td>
+                  <td className="py-2 px-4 border-b border-red-900">{item.itemId}</td>
+                  <td className="py-2 px-4 border-b border-red-900">
+                    {item.itemDeadline ? new Date(item.itemDeadline).toLocaleString() : 'No Deadline'}
+                  </td>
+                  <td className="py-2 px-4 border-b border-red-900">{item.itemDescription}</td>
+                  <td className="py-2 px-4 border-b border-red-900">{item.itemStatus}</td>
+                  <td className="py-2 px-4 border-b border-red-900">
+                    {new Date(item.itemCreationTs).toLocaleString()}
+                  </td>
+                  <td className="py-2 px-4 border-b border-red-900">{item.status}</td>
+                    <select className="border border-red-900 p-1 rounded">
+                    <option value="pendiente">Pendiente</option>
+                    <option value="hecho">Hecho</option>
+                    <option value="en_progreso">En Progreso</option>
+                  </select>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="7" className="py-2 px-4 text-center border-b border-red-900">No data available</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
-
 export default Backlog;
