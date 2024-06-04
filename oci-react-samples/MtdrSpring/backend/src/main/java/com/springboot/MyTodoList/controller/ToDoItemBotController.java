@@ -134,6 +134,9 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         } else if (messageText.startsWith("/markDone ")) {
             int taskId = Integer.parseInt(messageText.substring(10));
             markTaskDone(chatId, taskId);
+        } else if (messageText.startsWith("/markInProgress ")) {
+        int taskId = Integer.parseInt(messageText.substring(16));
+        markTaskInProgress(chatId, taskId);
         } else if (messageText.equals("/viewMyTasks")) {
             //List<ToDoItem> userTasks = getTasksForUser(user);
             //String tasks = userTasks.stream().map(ToDoItem::getItemDescription).collect(Collectors.joining("\n"));
@@ -299,4 +302,17 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
             sendMessage(chatId, "Failed to mark task as done.");
         }
     }
+
+        private void markTaskInProgress(Long chatId, int taskId) {
+        try {
+            ToDoItem item = getToDoItemById(taskId).getBody();
+            item.setItemStatus("In Progress");
+            updateToDoItem(item, taskId);
+            sendMessage(chatId, "Task marked as in progress.");
+        } catch (Exception e) {
+            logger.error("Failed to mark task as in progress for taskId: " + taskId, e);
+            sendMessage(chatId, "Failed to mark task as in progress.");
+        }
+    }
+
 }
