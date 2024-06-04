@@ -253,17 +253,26 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 
     // Métodos para los comandos específicos de Developer
     private void createTask(Long chatId, OracleUser user, String taskDescription) {
+        logger.info("Creating task for user: " + user.getUserName() + " with description: " + taskDescription);
         try {
+            sendMessage(chatId, "Inicio de crear");
             ToDoItem newItem = new ToDoItem();
+            sendMessage(chatId, "Setting description");
             newItem.setItemDescription(taskDescription);
+            sendMessage(chatId, "Setting TS");
             newItem.setItemCreationTs(OffsetDateTime.now());
+            sendMessage(chatId, "Setting status");
             newItem.setItemStatus("Not Started");
+            sendMessage(chatId, "Setting user");
             newItem.setUser(user);
-            addToDoItem(newItem);
+            sendMessage(chatId, "Adding item");
+            toDoItemService.addToDoItem(newItem);
+            sendMessage(chatId, "Success");
             sendMessage(chatId, "Task created successfully.");
+            logger.info("Task created successfully for user: " + user.getUserName());
         } catch (Exception e) {
-            logger.error(e.getLocalizedMessage(), e);
-            sendMessage(chatId, "Failed to create task: ");
+            logger.error("Failed to create task for user: " + user.getUserName(), e);
+            sendMessage(chatId, "Failed to create task." + user.getUserName() + e);
         }
     }
 
