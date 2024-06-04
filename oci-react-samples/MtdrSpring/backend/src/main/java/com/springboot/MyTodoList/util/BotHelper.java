@@ -10,7 +10,7 @@ public class BotHelper {
 
 	private static final Logger logger = LoggerFactory.getLogger(BotHelper.class);
 
-	public static void sendMessageToTelegram(Long chatId, String text, TelegramLongPollingBot bot) {
+	public static void sendMessageToTelegram (int chatId, String text, TelegramLongPollingBot bot) {
 
 		try {
 			// prepare message

@@ -32,7 +32,7 @@ public class ToDoItem {
     private OracleUser user;
 
     @ManyToOne
-    @JoinColumn(name = "SPRINT_ID", nullable = false)
+    @JoinColumn(name = "SPRINT_ID")
     private ToDoSprint sprint;
 
     public ToDoItem(){
