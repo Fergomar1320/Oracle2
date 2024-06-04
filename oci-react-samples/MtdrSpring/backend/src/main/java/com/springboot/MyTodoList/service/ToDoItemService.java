@@ -53,5 +53,12 @@ public class ToDoItemService {
             return null;
         }
     }
+    //public List<ToDoItem> findTasksByDeveloperName(String devName){
+    //    return toDoItemRepository.findTasksByDeveloperName(devName);
+    //}
+
+    //public List<ToDoItem> findTasksByUserId (int id){
+    //    return toDoItemRepository.findTasksByUserId(id);
+    //}
 
 }

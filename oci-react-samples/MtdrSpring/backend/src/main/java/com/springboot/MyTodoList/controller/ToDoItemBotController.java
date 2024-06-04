@@ -38,7 +38,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
     private ToDoItemService toDoItemService;
     private AuthenticationService authenticationService;
     private OracleUserService oracleUserService;
-    private Map<String, OracleUser> authenticatedUsers = new HashMap<>();
+    private Map<Long, OracleUser> authenticatedUsers = new HashMap<>();
     private String botName;
 
     public ToDoItemBotController(String botToken, String botName, ToDoItemService toDoItemService, AuthenticationService authenticationService, OracleUserService oracleUserService) {
@@ -53,7 +53,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageTextFromTelegram = update.getMessage().getText();
-            String chatId = update.getMessage().getChatId();
+            Long chatId = update.getMessage().getChatId();
 
             // Manejo de comandos de autenticación
             if (messageTextFromTelegram.startsWith("/login")) {
@@ -67,7 +67,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void handleLogin(String messageText, String chatId) {
+    private void handleLogin(String messageText, Long chatId) {
         String[] parts = messageText.split(" ");
         if (parts.length == 2) {
             try {
@@ -89,7 +89,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void handleCommands(String messageText, String chatId) {
+    private void handleCommands(String messageText, Long chatId) {
         OracleUser user = authenticatedUsers.get(chatId);
         if (authenticationService.isManager(user)) {
             // Manejar comandos para Manager
@@ -102,7 +102,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void handleManagerCommands(String messageText, String chatId) {
+    private void handleManagerCommands(String messageText, Long chatId) {
         if (messageText.equals("/start") || messageText.equals(BotLabels.SHOW_MAIN_SCREEN.getLabel())) {
             sendMainMenu(chatId);
         } else if (messageText.equals("/viewAllTasks")) {
@@ -111,15 +111,16 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
             sendMessage(chatId, tasks);
         } else if (messageText.startsWith("/viewTasksForDev ")) {
             String devName = messageText.substring(17);
-            List<ToDoItem> devTasks = getTasksForDeveloper(devName);
-            String tasks = devTasks.stream().map(ToDoItem::getItemDescription).collect(Collectors.joining("\n"));
-            sendMessage(chatId, tasks);
+            //List<ToDoItem> devTasks = getTasksForDeveloper(devName);
+            //String tasks = devTasks.stream().map(ToDoItem::getItemDescription).collect(Collectors.joining("\n"));
+            //sendMessage(chatId, tasks);
+            sendMessage(chatId, messageText);
         } else {
             sendMessage(chatId, "Manager command received: " + messageText);
         }
     }
 
-    private void handleDeveloperCommands(String messageText, String chatId, OracleUser user) {
+    private void handleDeveloperCommands(String messageText, Long chatId, OracleUser user) {
         if (messageText.equals("/start") || messageText.equals(BotLabels.SHOW_MAIN_SCREEN.getLabel())) {
             sendMainMenu(chatId);
         } else if (messageText.startsWith("/createTask ")) {
@@ -133,16 +134,20 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         } else if (messageText.startsWith("/markDone ")) {
             int taskId = Integer.parseInt(messageText.substring(10));
             markTaskDone(chatId, taskId);
+        } else if (messageText.startsWith("/markInProgress ")) {
+        int taskId = Integer.parseInt(messageText.substring(16));
+        markTaskInProgress(chatId, taskId);
         } else if (messageText.equals("/viewMyTasks")) {
-            List<ToDoItem> userTasks = getTasksForUser(user);
-            String tasks = userTasks.stream().map(ToDoItem::getItemDescription).collect(Collectors.joining("\n"));
-            sendMessage(chatId, tasks);
+            //List<ToDoItem> userTasks = getTasksForUser(user);
+            //String tasks = userTasks.stream().map(ToDoItem::getItemDescription).collect(Collectors.joining("\n"));
+            //sendMessage(chatId, tasks);
+            sendMessage(chatId, messageText);;
         } else {
             sendMessage(chatId, "Developer command received: " + messageText);
         }
     }
 
-    private void sendMainMenu(String chatId) {
+    private void sendMainMenu(Long chatId) {
         SendMessage messageToTelegram = new SendMessage();
         messageToTelegram.setChatId(chatId);
         messageToTelegram.setText(BotMessages.HELLO_MYTODO_BOT.getMessage());
@@ -175,7 +180,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void sendMessage(String chatId, String text) {
+    private void sendMessage(Long chatId, String text) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(text);
@@ -197,14 +202,14 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
     }
 
     // GET tasks for a specific developer
-    public List<ToDoItem> getTasksForDeveloper(String developerName) {
-        return toDoItemService.findTasksByDeveloperName(developerName);
-    }
+    //public List<ToDoItem> getTasksForDeveloper(String developerName) {
+    //    return toDoItemService.findTasksByDeveloperName(developerName);
+    //}
 
     // GET tasks for a specific user
-    public List<ToDoItem> getTasksForUser(OracleUser user) {
-        return toDoItemService.findTasksByUserId(user.getUserId());
-    }
+    //public List<ToDoItem> getTasksForUser(OracleUser user) {
+    //    return toDoItemService.findTasksByUserId(user.getUserId());
+    //}
 
     // GET BY ID /todolist/{id}
     public ResponseEntity<ToDoItem> getToDoItemById(@PathVariable int id) {
@@ -250,22 +255,24 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
     }
 
     // Métodos para los comandos específicos de Developer
-    private void createTask(String chatId, OracleUser user, String taskDescription) {
+    private void createTask(Long chatId, OracleUser user, String taskDescription) {
+        logger.info("Creating task for user: " + user.getUserName() + " with description: " + taskDescription);
         try {
             ToDoItem newItem = new ToDoItem();
             newItem.setItemDescription(taskDescription);
             newItem.setItemCreationTs(OffsetDateTime.now());
             newItem.setItemStatus("Not Started");
             newItem.setUser(user);
-            addToDoItem(newItem);
+            toDoItemService.addToDoItem(newItem);
             sendMessage(chatId, "Task created successfully.");
+            logger.info("Task created successfully for user: " + user.getUserName());
         } catch (Exception e) {
-            logger.error(e.getLocalizedMessage(), e);
-            sendMessage(chatId, "Failed to create task.");
+            logger.error("Failed to create task for user: " + user.getUserName(), e);
+            sendMessage(chatId, "Failed to create task." + user.getUserName() + e);
         }
     }
 
-    private void updateTask(String chatId, int taskId, String taskDescription) {
+    private void updateTask(Long chatId, int taskId, String taskDescription) {
         try {
             ToDoItem item = getToDoItemById(taskId).getBody();
             item.setItemDescription(taskDescription);
@@ -277,7 +284,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         }
     }
 
-    private void markTaskDone(String chatId, int taskId) {
+    private void markTaskDone(Long chatId, int taskId) {
         try {
             ToDoItem item = getToDoItemById(taskId).getBody();
             item.setItemStatus("Done");
@@ -288,4 +295,17 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
             sendMessage(chatId, "Failed to mark task as done.");
         }
     }
+
+        private void markTaskInProgress(Long chatId, int taskId) {
+        try {
+            ToDoItem item = getToDoItemById(taskId).getBody();
+            item.setItemStatus("In Progress");
+            updateToDoItem(item, taskId);
+            sendMessage(chatId, "Task marked as in progress.");
+        } catch (Exception e) {
+            logger.error("Failed to mark task as in progress for taskId: " + taskId, e);
+            sendMessage(chatId, "Failed to mark task as in progress.");
+        }
+    }
+
 }
