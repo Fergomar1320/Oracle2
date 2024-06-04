@@ -18,12 +18,12 @@ import javax.transaction.Transactional;
 public interface ToDoItemRepository extends JpaRepository<ToDoItem,Integer> {
   
     //findTasksByDeveloperName
-    @Query("SELECT ti.ITEM_ID, ti.ITEM_DESCRIPTION, ti.ITEM_STATUS, ti.ITEM_DEADLINE " +
+    /*@Query("SELECT ti.ITEM_ID, ti.ITEM_DESCRIPTION, ti.ITEM_STATUS, ti.ITEM_DEADLINE " +
     "FROM TODOUSER.TODOITEM ti INNER JOIN TODOUSER.ORACLEUSER ou ON ti.USER_ID = ou.USER_ID WHERE ou.USER_NAME =  ':developerName'")
     List<ToDoItem> findTasksByDeveloperName(@Param("developerName") String developerName);
 
     //findTasksByUserId
     @Query("SELECT ti.ITEM_ID, ti.ITEM_DESCRIPTION, ti.ITEM_STATUS, ti.ITEM_DEADLINE " +
     "FROM TODOUSER.TODOITEM ti INNER JOIN TODOUSER.ORACLEUSER ou ON ti.USER_ID = ou.USER_ID WHERE ou.USER_ID = :userId")
-    List<ToDoItem> findTasksByUserId(@Param("userId") int userId);
+    List<ToDoItem> findTasksByUserId(@Param("userId") int userId);*/
 }
