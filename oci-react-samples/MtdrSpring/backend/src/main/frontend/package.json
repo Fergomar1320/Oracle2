@@ -19,6 +19,7 @@
         "tailwindcss": "^3.4.3",
         "typescript": "^4.6.4"
     },
+   
     "scripts": {
         "start": "react-scripts start",
         "build": "react-scripts build"
@@ -30,4 +31,5 @@
         "last 5 versions"
     ],
     "homepage": "."
+
 }

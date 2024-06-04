@@ -15,7 +15,7 @@ public class ToDoTeam {
     public ToDoTeam() {
     }
 
-    public ToDoTeam (int team_id, String team_name) {
+    public ToDoTeam(int team_id, String team_name) {
         this.team_id = team_id;
         this.team_name = team_name;
     }
@@ -28,7 +28,7 @@ public class ToDoTeam {
         return team_name;
     }
 
-    public void setTeamId (int team_id) {
+    public void setTeamId(int team_id) {
         this.team_id = team_id;
     }
 
