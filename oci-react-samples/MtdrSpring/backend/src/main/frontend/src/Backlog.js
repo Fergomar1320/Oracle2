@@ -20,10 +20,10 @@ const Backlog = () => {
 
   const addTask = () => {
     const description = document.getElementById('description').value;
-    const deadline = document.getElementById('deadline').value;
-    const sprint = document.getElementById('sprint').value;
+    const deadline = document.getElementById('deadline').value ? document.getElementById('deadline').value : null;
+    const sprint = document.getElementById('sprint').value ? document.getElementById('sprint').value : null;
 
-    if (description && deadline && sprint) {
+    if (description) {
       const newItem = {
         user: { userName: 'New User' },
         itemId: 'New ID',
