@@ -24,6 +24,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import com.springboot.MyTodoList.model.OracleUser;
 import com.springboot.MyTodoList.model.ToDoItem;
+import com.springboot.MyTodoList.model.ToDoSprint;
 import com.springboot.MyTodoList.service.AuthenticationService;
 import com.springboot.MyTodoList.service.ToDoItemService;
 import com.springboot.MyTodoList.service.OracleUserService;
@@ -31,6 +32,7 @@ import com.springboot.MyTodoList.util.BotCommands;
 import com.springboot.MyTodoList.util.BotHelper;
 import com.springboot.MyTodoList.util.BotLabels;
 import com.springboot.MyTodoList.util.BotMessages;
+import com.springboot.MyTodoList.service.LangChainService;
 
 public class ToDoItemBotController extends TelegramLongPollingBot {
 
@@ -259,10 +261,24 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         logger.info("Creating task for user: " + user.getUserName() + " with description: " + taskDescription);
         try {
             ToDoItem newItem = new ToDoItem();
-            newItem.setItemDescription(taskDescription);
+            Map<String, Object> taskDetails = LangChainService.categorizeMessage(taskDescription);
+            sendMessage(chatId, "Task details: " + taskDetails);
+            newItem.setItemDescription((String) taskDetails.get("description"));
             newItem.setItemCreationTs(OffsetDateTime.now());
             newItem.setItemStatus("Not Started");
+            sendMessage(chatId, "Desc, creationTs, status set");
+            if (taskDetails.get("deadline") != null) {
+                newItem.setItemDeadline((OffsetDateTime) taskDetails.get("deadline"));
+            }
+            sendMessage(chatId, "Deadline set");
+            if (taskDetails.get("sprint") != null) {
+                ToDoSprint sprint = (ToDoSprint) taskDetails.get("sprint");
+                newItem.setSprint(sprint);
+            }
+            sendMessage(chatId, "Sprint set");
             newItem.setUser(user);
+            sendMessage(chatId, "User set");
+
             toDoItemService.addToDoItem(newItem);
             sendMessage(chatId, "Task created successfully.");
             logger.info("Task created successfully for user: " + user.getUserName());
