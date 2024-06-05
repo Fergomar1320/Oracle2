@@ -17,27 +17,42 @@ function App() {
 
 function View() {
   return (
-    <div className='View h-screen bg-orange-50'>
+    <div className='View h-screen' style={{ backgroundColor: 'rgb(253, 246, 240)' }}>
       <div className='choose-view flex space-x-5 h-full p-8'>
-        <Button className="backlog bg-gray-600 text-orange-50 rounded-3xl hover:bg-red-900 w-1/2" to="/backlog">
-          <h1 className="text-5xl">Backlog</h1>
+        <Button 
+          className="backlog rounded-3xl w-1/2" 
+          to="/backlog" 
+          buttonStyle={{ backgroundColor: 'rgb(59, 53, 49)' }}
+          hoverStyle={{ backgroundColor: 'rgb(198, 60, 41)' }}
+        >
+          <h1 className="text-5xl" style={{ color: 'rgb(253, 246, 240)' }}>Backlog</h1>
         </Button>
-        <Button className="actual-sprint bg-gray-600 text-orange-50 rounded-3xl hover:bg-purple-900 w-1/2" to="/actual-sprint">
-          <h1 className="text-5xl">Actual Sprint</h1>
+        <Button 
+          className="actual-sprint rounded-3xl w-1/2" 
+          to="/actual-sprint" 
+          buttonStyle={{ backgroundColor: 'rgb(59, 53, 49)' }}
+          hoverStyle={{ backgroundColor: 'rgb(198, 60, 41)' }}
+        >
+          <h1 className="text-5xl" style={{ color: 'rgb(253, 246, 240)' }}>Actual Sprint</h1>
         </Button>
       </div>
     </div>
   );
 }
 
-function Button({ children, className, to }) {
+function Button({ children, className, to, buttonStyle, hoverStyle }) {
   const navigate = useNavigate();
   return (
-    <button className={`Button ${className}`} onClick={() => navigate(to)}>
+    <button 
+      className={`Button ${className}`} 
+      onClick={() => navigate(to)}
+      style={{ backgroundColor: buttonStyle.backgroundColor }}
+      onMouseOver={(e) => e.currentTarget.style.backgroundColor = hoverStyle.backgroundColor}
+      onMouseOut={(e) => e.currentTarget.style.backgroundColor = buttonStyle.backgroundColor}
+    >
       {children}
     </button>
   );
 }
 
 export default App;
-
