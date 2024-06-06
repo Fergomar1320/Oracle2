@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.time.format.DateTimeParseException;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -18,21 +19,20 @@ import dev.langchain4j.data.message.UserMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
-
 @Service
 public class LangChainService {
 
-    @Autowired
-    private OpenAiChatModel openAiChatModel;
+    private final OpenAiChatModel openAiChatModel;
 
-    public static Map<String, Object> categorizeMessage(String message) {
-        ChatLanguageModel model = OpenAiChatModel.builder()
-            .apiKey(ApiKeys.OPENAI_API_KEY)
-            .modelName("gpt-4")
-            .build();
+    @Autowired
+    public LangChainService(OpenAiChatModel openAiChatModel) {
+        this.openAiChatModel = openAiChatModel;
+    }
+
+    public Map<String, Object> categorizeMessage(String message) {
+        ChatLanguageModel model = this.openAiChatModel;
         
-            // Current date and sprint number
+        // Current date and sprint number
         LocalDate today = LocalDate.now();
 
         List<ChatMessage> messages = new ArrayList<>();
@@ -59,14 +59,23 @@ public class LangChainService {
         if (taskDeadline.equals("None")) {
             deadline = null;
         } else {
-            deadline = LocalDate.parse(taskDeadline).atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
+            try {
+                deadline = LocalDate.parse(taskDeadline).atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
+            } catch (DateTimeParseException e) {
+                // Handle invalid date format here, perhaps by logging an error or setting a default value
+                deadline = null; // Set to null or another default value if parsing fails
+            }
         }
+
+        if (deadline!= null &&!taskDeadline.equals("None")) {
+            taskDeadline = taskDeadline.substring(0, Math.min(taskDeadline.length(), 10));
+        }
+        
 
         String deliverSprint = "None";
         if (sprintNumber <= 0) {
             deliverSprint = null;
         }
-
 
         Map<String, Object> taskDetails = new HashMap<>();
         taskDetails.put("taskName", taskName);
