@@ -60,7 +60,6 @@ const Backlog = () => {
               <th className="py-2 px-4 border-b text-center">Item Deadline</th>
               <th className="py-2 px-4 border-b text-center">Item Description</th>
               <th className="py-2 px-4 border-b text-center">Item Status</th>
-              <th className="py-2 px-4 border-b text-center">Item Creation TS</th>
             </tr>
           </thead>
           <tbody>
