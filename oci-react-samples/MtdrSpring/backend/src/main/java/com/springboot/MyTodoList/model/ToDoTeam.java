@@ -7,7 +7,7 @@ import javax.persistence.*;
 public class ToDoTeam {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long team_id;
+    private int team_id;
 
     @Column(name = "TEAM_NAME")
     private String team_name;
@@ -15,12 +15,12 @@ public class ToDoTeam {
     public ToDoTeam() {
     }
 
-    public ToDoTeam(long team_id, String team_name) {
+    public ToDoTeam(int team_id, String team_name) {
         this.team_id = team_id;
         this.team_name = team_name;
     }
 
-    public long getTeamId() {
+    public int getTeamId() {
         return team_id;
     }
 
@@ -28,7 +28,7 @@ public class ToDoTeam {
         return team_name;
     }
 
-    public void setTeamId(long team_id) {
+    public void setTeamId(int team_id) {
         this.team_id = team_id;
     }
 

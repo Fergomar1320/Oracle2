@@ -8,7 +8,7 @@ import java.util.Date;
 public class ToDoSprint {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long sprint_id;
+    private int sprint_id;
 
     @Column(name = "SPRINT_NAME")
     private String sprint_name;
@@ -29,7 +29,7 @@ public class ToDoSprint {
     public ToDoSprint() {
     }
 
-    public ToDoSprint(long sprint_id, String sprint_name, Date sprint_start_date, Date sprint_end_date, String sprint_status, ToDoTeam team) {
+    public ToDoSprint(int sprint_id, String sprint_name, Date sprint_start_date, Date sprint_end_date, String sprint_status, ToDoTeam team) {
         this.sprint_id = sprint_id;
         this.sprint_name = sprint_name;
         this.sprint_start_date = sprint_start_date;
@@ -38,7 +38,7 @@ public class ToDoSprint {
         this.team = team;
     }
 
-    public long getSprintId() {
+    public int getSprintId() {
         return sprint_id;
     }
 
@@ -62,7 +62,7 @@ public class ToDoSprint {
         return team;
     }
 
-    public void setSprintId(long sprint_id) {
+    public void setSprintId(int sprint_id) {
         this.sprint_id = sprint_id;
     }
 

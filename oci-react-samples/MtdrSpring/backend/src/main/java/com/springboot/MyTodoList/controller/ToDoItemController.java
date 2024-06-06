@@ -32,15 +32,18 @@ public class ToDoItemController {
     }
     //@CrossOrigin
     @PostMapping(value = "/todolist")
-    public ResponseEntity addToDoItem(@RequestBody ToDoItem todoItem) throws Exception{
-        ToDoItem td = toDoItemService.addToDoItem(todoItem);
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.set("location",""+td.getItemId());
-        responseHeaders.set("Access-Control-Expose-Headers","location");
-        //URI location = URI.create(""+td.getID())
-
-        return ResponseEntity.ok()
-                .headers(responseHeaders).build();
+    public ResponseEntity<?> addToDoItem(@RequestBody ToDoItem todoItem) {
+        try {
+            ToDoItem newToDoItem = toDoItemService.addToDoItem(todoItem);
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.set("location", "" + newToDoItem.getItemId());
+            responseHeaders.set("Access-Control-Expose-Headers", "location");
+            return ResponseEntity.ok().headers(responseHeaders).body(newToDoItem);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred" + e.getMessage());
+        }
     }
     //@CrossOrigin
     @PutMapping(value = "todolist/{id}")
@@ -64,7 +67,4 @@ public class ToDoItemController {
             return new ResponseEntity<>(flag,HttpStatus.NOT_FOUND);
         }
     }
-
-
-
 }

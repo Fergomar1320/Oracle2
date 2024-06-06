@@ -1,5 +1,9 @@
 package com.springboot.MyTodoList.service;
 
+import java.time.OffsetDateTime;
+
+import com.springboot.MyTodoList.model.OracleUser;
+import com.springboot.MyTodoList.model.ToDoSprint;
 import com.springboot.MyTodoList.model.ToDoItem;
 import com.springboot.MyTodoList.repository.ToDoItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +31,14 @@ public class ToDoItemService {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-    public ToDoItem addToDoItem(ToDoItem toDoItem){
+    public ToDoItem addToDoItem(ToDoItem toDoItem) {
+        if (toDoItem.getUser() == null || toDoItem.getItemDescription() == null) {
+            throw new IllegalArgumentException("User and description must not be null");
+        }
+
+        toDoItem.setItemStatus("Not Started");
+        toDoItem.setItemCreationTs(OffsetDateTime.now());
+
         return toDoItemRepository.save(toDoItem);
     }
 
@@ -53,5 +64,12 @@ public class ToDoItemService {
             return null;
         }
     }
+    //public List<ToDoItem> findTasksByDeveloperName(String devName){
+    //    return toDoItemRepository.findTasksByDeveloperName(devName);
+    //}
+
+    //public List<ToDoItem> findTasksByUserId (int id){
+    //    return toDoItemRepository.findTasksByUserId(id);
+    //}
 
 }

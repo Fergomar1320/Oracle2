@@ -1,0 +1,20 @@
+reacttodonv5yy_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.mx-queretaro-1.oraclecloud.com))(connect_data=(service_name=g32ceb74f6438ea_reacttodonv5yy_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+reacttodonv5yy_low = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.mx-queretaro-1.oraclecloud.com))(connect_data=(service_name=g32ceb74f6438ea_reacttodonv5yy_low.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+reacttodonv5yy_medium = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.mx-queretaro-1.oraclecloud.com))(connect_data=(service_name=g32ceb74f6438ea_reacttodonv5yy_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+reacttodonv5yy_tp = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.mx-queretaro-1.oraclecloud.com))(connect_data=(service_name=g32ceb74f6438ea_reacttodonv5yy_tp.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+reacttodonv5yy_tpurgent = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.mx-queretaro-1.oraclecloud.com))(connect_data=(service_name=g32ceb74f6438ea_reacttodonv5yy_tpurgent.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+
+
+empresa2_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.mx-queretaro-1.oraclecloud.com))(connect_data=(service_name=g32ceb74f6438ea_empresa2_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+empresa2_low = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.mx-queretaro-1.oraclecloud.com))(connect_data=(service_name=g32ceb74f6438ea_empresa2_low.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+empresa2_medium = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.mx-queretaro-1.oraclecloud.com))(connect_data=(service_name=g32ceb74f6438ea_empresa2_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+
+
