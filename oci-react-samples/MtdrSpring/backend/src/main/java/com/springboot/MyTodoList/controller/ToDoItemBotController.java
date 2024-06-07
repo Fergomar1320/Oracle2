@@ -60,6 +60,8 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
             // Manejo de comandos de autenticación
             if (messageTextFromTelegram.startsWith("/login")) {
                 handleLogin(messageTextFromTelegram, chatId);
+            } else if (messageTextFromTelegram.equals("/logout")){
+                handleLogout(chatId);
             } else if (authenticatedUsers.containsKey(chatId)) {
                 // Procesar otros comandos solo si el usuario está autenticado
                 handleCommands(messageTextFromTelegram, chatId);
@@ -90,6 +92,16 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
             sendMessage(chatId, "Invalid login command. Use: /login <USER_ID>");
         }
     }
+
+    private void handleLogout(Long chatId) {
+        if (authenticatedUsers.containsKey(chatId)) {
+            OracleUser user = authenticatedUsers.remove(chatId);
+            sendMessage(chatId, "Logout successful. Goodbye " + user.getUserName() + "!");
+        } else {
+            sendMessage(chatId, "You are not logged in.");
+        }
+    }
+
 
     private void handleCommands(String messageText, Long chatId) {
         OracleUser user = authenticatedUsers.get(chatId);
