@@ -20,17 +20,18 @@ const Backlog = () => {
   }, []);
 
   const addTask = () => {
-    const description = document.getElementById('description').value;
+    const description = document.getElementById('description').value ? document.getElementById('description').value : null;
     const deadline = document.getElementById('deadline').value ? document.getElementById('deadline').value : null;
+    const sprint = document.getElementById('sprint').value ? document.getElementById('sprint').value : null;
 
     console.log('Attempting to add task with description:', description);
 
     if (description) {
       const newItem = {
-        user: { userName: 'New User' },
-        itemId: 'New ID',
-        itemDeadline: deadline,
+        user: { userName: 'New User' }, // Update this accordingly
         itemDescription: description,
+        itemDeadline: deadline,
+        itemSprint: sprint,
       };
 
       console.log('Sending new task to the server:', newItem);
