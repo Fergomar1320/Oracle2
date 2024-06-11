@@ -68,8 +68,8 @@ public class ToDoItemService {
     //    return toDoItemRepository.findTasksByDeveloperName(devName);
     //}
 
-    //public List<ToDoItem> findTasksByUserId (int id){
-    //    return toDoItemRepository.findTasksByUserId(id);
-    //}
+    public List<ToDoItem> findByUserId (int id){
+        return toDoItemRepository.findByUserId(id);
+    }
 
 }
