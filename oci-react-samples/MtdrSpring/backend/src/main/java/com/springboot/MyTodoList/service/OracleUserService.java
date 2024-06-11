@@ -14,4 +14,8 @@ public class OracleUserService {
     public OracleUser updateUser(OracleUser user) {
         return oracleUserRepository.save(user);
     }
+
+    public OracleUser getUserById(int id) {
+        return oracleUserRepository.findById(id).orElse(null);
+    }
 }
