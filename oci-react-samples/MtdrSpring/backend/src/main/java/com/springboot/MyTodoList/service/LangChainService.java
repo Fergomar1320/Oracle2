@@ -32,7 +32,7 @@ public class LangChainService {
     public Map<String, Object> categorizeMessage(String message) {
         ChatLanguageModel model = this.openAiChatModel;
         
-        // Current date and sprint number
+        // Current date 
         LocalDate today = LocalDate.now();
 
         List<ChatMessage> messages = new ArrayList<>();
@@ -59,16 +59,7 @@ public class LangChainService {
         if (taskDeadline.equals("None")) {
             deadline = null;
         } else {
-            try {
-                deadline = LocalDate.parse(taskDeadline).atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
-            } catch (DateTimeParseException e) {
-                // Handle invalid date format here, perhaps by logging an error or setting a default value
-                deadline = null; // Set to null or another default value if parsing fails
-            }
-        }
-
-        if (deadline!= null &&!taskDeadline.equals("None")) {
-            taskDeadline = taskDeadline.substring(0, Math.min(taskDeadline.length(), 10));
+            deadline = LocalDate.parse(taskDeadline).atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
         }
         
 
@@ -79,6 +70,71 @@ public class LangChainService {
 
         Map<String, Object> taskDetails = new HashMap<>();
         taskDetails.put("taskName", taskName);
+        taskDetails.put("taskDeadline", deadline);
+        if (sprintNumber <= 0) {
+            taskDetails.put("sprintNumber", deliverSprint);
+        } else {
+            taskDetails.put("sprintNumber", sprintNumber);
+        }
+
+        return taskDetails;
+    }
+
+        public static Map<String, Object> categorizeMessageUpdate(String message) {
+        ChatLanguageModel model = OpenAiChatModel.builder()
+                .apiKey(ApiKeys.OPENAI_API_KEY)
+                .modelName("gpt-4")
+                .build();
+
+        // Current date
+        LocalDate today = LocalDate.now();
+
+        List<ChatMessage> messages = new ArrayList<>();
+        messages.add(new SystemMessage("Categorize this text in the following categories "
+        + "if said by user: Task name, Task deadline, Sprint number. If not said, "
+        + "it should be None. If needed, calculate date or sprint."));
+        messages.add(new SystemMessage("Today's date: " 
+        + today.format(DateTimeFormatter.ofPattern("EEEE MMMM dd, yyyy"))));
+        messages.add(new SystemMessage("Task name: (100 chars max or None if "
+        + "not said by user)\nTask deadline: (YYYY-MM-DD or None if not said "
+        + "by user)\nSprint number: (integer or None if not said by user)"));
+        messages.add(new UserMessage(message));
+
+        Response<AiMessage> response = model.generate(messages);
+
+        String parsedResult = response.content().text();
+
+        // Extract the task details from the parsed result
+        String taskName = parsedResult.split("\n")[0].split(": ")[1].trim();
+        String taskDeadline = parsedResult.split("\n")[1].split(": ")[1].trim();
+        String sprintNumberStr = parsedResult.split("\n")[2].split(": ")[1].trim();
+        int sprintNumber = Integer.parseInt(sprintNumberStr.equals("None") ? "0" : sprintNumberStr);
+
+        String taskNameValidated = taskName.equals("None") ? null : taskName;
+
+        OffsetDateTime deadline;
+        if (taskDeadline.equals("None")) {
+            deadline = null;
+        } else {
+            deadline = LocalDate.parse(taskDeadline).atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
+        }
+
+        String deliverSprint = "None";
+        if (sprintNumber <= 0) {
+            deliverSprint = null;
+        }
+
+        System.out.println("Extracted Task Details:");
+        System.out.println("Task Name: " + taskNameValidated);
+        System.out.println("Task Deadline: " + deadline);
+        if (sprintNumber <= 0) {
+            System.out.println("Sprint Number: None" + deliverSprint);
+        } else {
+            System.out.println("Sprint Number: " + sprintNumber);
+        }
+
+        Map<String, Object> taskDetails = new HashMap<>();
+        taskDetails.put("taskName", taskNameValidated);
         taskDetails.put("taskDeadline", deadline);
         if (sprintNumber <= 0) {
             taskDetails.put("sprintNumber", deliverSprint);

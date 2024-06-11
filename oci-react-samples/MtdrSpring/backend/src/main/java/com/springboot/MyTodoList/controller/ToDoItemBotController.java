@@ -313,9 +313,27 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
     private void updateTask(Long chatId, int taskId, String taskDescription) {
         try {
             ToDoItem item = getToDoItemById(taskId).getBody();
-            item.setItemDescription(taskDescription);
+            if (item == null) {
+                sendMessage(chatId, "Task not found.");
+                return;
+            }
+            Map<String, Object> taskDetails = LangChainService.categorizeMessageUpdate(taskDescription);
+            sendMessage(chatId, "Task details: " + taskDetails);
+            if (taskDetails.get("description") != null) {
+                item.setItemDescription((String) taskDetails.get("description"));
+                sendMessage(chatId, "Description set" + taskDetails.get("description"));
+            }
+            if (taskDetails.get("deadline") != null) {
+                item.setItemDeadline((OffsetDateTime) taskDetails.get("deadline"));
+                sendMessage(chatId, "Deadline set" + taskDetails.get("deadline"));
+            }
+            if (taskDetails.get("sprint") != null) {
+                ToDoSprint sprint = (ToDoSprint) taskDetails.get("sprint");
+                item.setSprint(sprint);
+                sendMessage(chatId, "Sprint set" + taskDetails.get("sprint"));
+            }
             updateToDoItem(item, taskId);
-            sendMessage(chatId, "Task updated successfully.");
+            sendMessage(chatId, "Task updated successfully." + item.getItemDescription() + item.getItemDeadline() + item.getSprint());
         } catch (Exception e) {
             logger.error(e.getLocalizedMessage(), e);
             sendMessage(chatId, "Failed to update task.");
