@@ -156,7 +156,7 @@ create table TODOUSER.TODOSPRINT(
 );
 
 create table TODOUSER.ORACLEUSER(
-    user_id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_name VARCHAR2(4000),
     user_role VARCHAR(10) CHECK (user_role IN ('Developer', 'Manager')),
     user_chat_id VARCHAR2(4000),
