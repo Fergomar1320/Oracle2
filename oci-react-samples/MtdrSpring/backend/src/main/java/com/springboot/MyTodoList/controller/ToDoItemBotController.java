@@ -42,13 +42,15 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
     private OracleUserService oracleUserService;
     private Map<Long, OracleUser> authenticatedUsers = new HashMap<>();
     private String botName;
+    private LangChainService langChainService;
 
-    public ToDoItemBotController(String botToken, String botName, ToDoItemService toDoItemService, AuthenticationService authenticationService, OracleUserService oracleUserService) {
+    public ToDoItemBotController(String botToken, String botName, ToDoItemService toDoItemService, AuthenticationService authenticationService, OracleUserService oracleUserService, LangChainService langChainService) {
         super(botToken);
         this.authenticationService = authenticationService;
         this.toDoItemService = toDoItemService;
         this.oracleUserService = oracleUserService;
         this.botName = botName;
+        this.langChainService = langChainService;
     }
 
     @Override
@@ -261,23 +263,23 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         logger.info("Creating task for user: " + user.getUserName() + " with description: " + taskDescription);
         try {
             ToDoItem newItem = new ToDoItem();
-            Map<String, Object> taskDetails = LangChainService.categorizeMessage(taskDescription);
+            Map<String, Object> taskDetails = langChainService.categorizeMessage(taskDescription); // Use the injected instance
             sendMessage(chatId, "Task details: " + taskDetails);
-            newItem.setItemDescription((String) taskDetails.get("description"));
+            newItem.setItemDescription((String) taskDetails.get("taskName"));
             newItem.setItemCreationTs(OffsetDateTime.now());
             newItem.setItemStatus("Not Started");
-            sendMessage(chatId, "Desc, creationTs, status set");
-            if (taskDetails.get("deadline") != null) {
-                newItem.setItemDeadline((OffsetDateTime) taskDetails.get("deadline"));
+            sendMessage(chatId, "Desc, creationTs, status set " + newItem.getItemDescription() + newItem.getItemCreationTs() + newItem.getItemStatus());
+            if (taskDetails.get("taskDeadline") != null) {
+                newItem.setItemDeadline((OffsetDateTime) taskDetails.get("taskDeadline"));
             }
-            sendMessage(chatId, "Deadline set");
-            if (taskDetails.get("sprint") != null) {
-                ToDoSprint sprint = (ToDoSprint) taskDetails.get("sprint");
+            sendMessage(chatId, "Deadline set " + newItem.getItemDeadline());
+            if (taskDetails.get("sprintNumber") != null) {
+                ToDoSprint sprint = (ToDoSprint) taskDetails.get("sprintNumber");
                 newItem.setSprint(sprint);
             }
-            sendMessage(chatId, "Sprint set");
+            sendMessage(chatId, "Sprint set " + newItem.getSprint());
             newItem.setUser(user);
-            sendMessage(chatId, "User set");
+            sendMessage(chatId, "User set " + newItem.getUser());
 
             toDoItemService.addToDoItem(newItem);
             sendMessage(chatId, "Task created successfully.");

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.time.format.DateTimeParseException;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -18,19 +19,18 @@ import dev.langchain4j.data.message.UserMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
-
 @Service
 public class LangChainService {
 
-    @Autowired
-    private OpenAiChatModel openAiChatModel;
+    private final OpenAiChatModel openAiChatModel;
 
-    public static Map<String, Object> categorizeMessage(String message) {
-        ChatLanguageModel model = OpenAiChatModel.builder()
-            .apiKey(ApiKeys.OPENAI_API_KEY)
-            .modelName("gpt-4")
-            .build();
+    @Autowired
+    public LangChainService(OpenAiChatModel openAiChatModel) {
+        this.openAiChatModel = openAiChatModel;
+    }
+
+    public Map<String, Object> categorizeMessage(String message) {
+        ChatLanguageModel model = this.openAiChatModel;
         
         // Current date 
         LocalDate today = LocalDate.now();
@@ -61,12 +61,12 @@ public class LangChainService {
         } else {
             deadline = LocalDate.parse(taskDeadline).atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
         }
+        
 
         String deliverSprint = "None";
         if (sprintNumber <= 0) {
             deliverSprint = null;
         }
-
 
         Map<String, Object> taskDetails = new HashMap<>();
         taskDetails.put("taskName", taskName);
