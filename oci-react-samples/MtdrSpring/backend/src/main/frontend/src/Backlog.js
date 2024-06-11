@@ -5,7 +5,6 @@ const Backlog = () => {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    console.log('Fetching todo list...');
     fetch('/todolist')
       .then(response => {
         if (!response.ok) {
@@ -32,7 +31,6 @@ const Backlog = () => {
         itemId: 'New ID',
         itemDeadline: deadline,
         itemDescription: description,
-        itemCreationTs: new Date().toISOString(),
       };
 
       console.log('Sending new task to the server:', newItem);
