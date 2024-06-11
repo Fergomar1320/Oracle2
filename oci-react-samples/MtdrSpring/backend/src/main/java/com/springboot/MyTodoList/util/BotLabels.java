@@ -13,7 +13,8 @@ public enum BotLabels {
     DASH("-"),
     VIEW_MY_TASKS("View My Tasks"),
     VIEW_ALL_TASKS("View All Tasks"),
-    VIEW_TASKS_FOR_DEV("View Tasks for Developer");
+    VIEW_TASKS_FOR_DEV("View Tasks for Developer"),
+    LOGOUT("Logout");
 
     private String label;
 

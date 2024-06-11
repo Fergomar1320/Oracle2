@@ -162,6 +162,12 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
     }
 
     private void sendMainMenu(Long chatId) {
+        OracleUser user = authenticatedUsers.get(chatId);
+        if (user == null) {
+            sendMessage(chatId, "Please login using /login <USER_ID>");
+            return;
+        }
+
         SendMessage messageToTelegram = new SendMessage();
         messageToTelegram.setChatId(chatId);
         messageToTelegram.setText(BotMessages.HELLO_MYTODO_BOT.getMessage());
@@ -169,17 +175,31 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         List<KeyboardRow> keyboard = new ArrayList<>();
 
-        // First row
-        KeyboardRow row = new KeyboardRow();
-        row.add(BotLabels.LIST_ALL_ITEMS.getLabel());
-        row.add(BotLabels.ADD_NEW_ITEM.getLabel());
-        keyboard.add(row);
+        if (authenticationService.isManager(user)) {
+            // Manager buttons
+            KeyboardRow row = new KeyboardRow();
+            row.add(BotCommands.VIEW_TASKS_FOR_DEV.getCommand());
+            row.add(BotCommands.VIEW_ALL_TASKS.getCommand());
+            keyboard.add(row);
+        } else if (authenticationService.isDeveloper(user)) {
+            // Developer buttons
+            KeyboardRow row = new KeyboardRow();
+            row.add(BotCommands.CREATE_TASK.getCommand());
+            row.add(BotCommands.UPDATE_TASK.getCommand());
+            keyboard.add(row);
 
-        // Second row
-        row = new KeyboardRow();
-        row.add(BotLabels.SHOW_MAIN_SCREEN.getLabel());
-        row.add(BotLabels.HIDE_MAIN_SCREEN.getLabel());
-        keyboard.add(row);
+            row = new KeyboardRow();
+            row.add(BotCommands.MARK_DONE.getCommand());
+            row.add(BotCommands.MARK_IN_PROGRESS.getCommand());
+            keyboard.add(row);
+        }
+
+        // Common buttons
+        KeyboardRow commonRow = new KeyboardRow();
+        commonRow.add(BotCommands.START_COMMAND.getCommand());
+        commonRow.add(BotCommands.HIDE_COMMAND.getCommand());
+        commonRow.add(BotCommands.LOGOUT.getCommand());
+        keyboard.add(commonRow);
 
         // Set the keyboard
         keyboardMarkup.setKeyboard(keyboard);
@@ -193,6 +213,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
             logger.error(e.getLocalizedMessage(), e);
         }
     }
+
 
     private void sendMessage(Long chatId, String text) {
         SendMessage message = new SendMessage();

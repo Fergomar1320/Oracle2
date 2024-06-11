@@ -10,9 +10,11 @@ public enum BotCommands {
     CREATE_TASK("/createTask"),
     UPDATE_TASK("/updateTask"),
     MARK_DONE("/markDone"),
+    MARK_IN_PROGRESS("/markInProgress"),
     VIEW_MY_TASKS("/viewMyTasks"),
     VIEW_ALL_TASKS("/viewAllTasks"),
-    VIEW_TASKS_FOR_DEV("/viewTasksForDev");
+    VIEW_TASKS_FOR_DEV("/viewTasksForDev"),
+    LOGOUT("/logout");
 
     private String command;
 
