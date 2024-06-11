@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 
 const Backlog = () => {
   const [data, setData] = useState([]);
-  const [showModal, setShowModal] = useState(false); 
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
+    console.log('Fetching todo list...');
     fetch('/todolist')
       .then(response => {
         if (!response.ok) {
@@ -13,6 +14,7 @@ const Backlog = () => {
         return response.json();
       })
       .then(data => {
+        console.log('Data fetched successfully:', data);
         setData(data);
       })
       .catch(error => console.error('Error fetching the data:', error));
@@ -21,7 +23,8 @@ const Backlog = () => {
   const addTask = () => {
     const description = document.getElementById('description').value;
     const deadline = document.getElementById('deadline').value ? document.getElementById('deadline').value : null;
-    const sprint = document.getElementById('sprint').value ? document.getElementById('sprint').value : null;
+
+    console.log('Attempting to add task with description:', description);
 
     if (description) {
       const newItem = {
@@ -31,9 +34,28 @@ const Backlog = () => {
         itemDescription: description,
         itemCreationTs: new Date().toISOString(),
       };
-      setData([...data, newItem]);
-      document.getElementById('taskForm').reset();
-      setShowModal(false);
+
+      console.log('Sending new task to the server:', newItem);
+      fetch('/todolist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newItem),
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok' + response);
+        }
+        return response.json();
+      })
+      .then(savedItem => {
+        console.log('Task added successfully:', savedItem);
+        setData([...data, savedItem]);
+        document.getElementById('taskForm').reset();
+        setShowModal(false);
+      })
+      .catch(error => console.error('Error adding the task:', error));
     } else {
       alert('Please fill out all fields.');
     }
@@ -60,7 +82,6 @@ const Backlog = () => {
               <th className="py-2 px-4 border-b text-center">Item Deadline</th>
               <th className="py-2 px-4 border-b text-center">Item Description</th>
               <th className="py-2 px-4 border-b text-center">Item Status</th>
-              <th className="py-2 px-4 border-b text-center">Item Creation TS</th>
             </tr>
           </thead>
           <tbody>
