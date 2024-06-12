@@ -352,18 +352,18 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
             }
             Map<String, Object> taskDetails = LangChainService.categorizeMessageUpdate(taskDescription);
             sendMessage(chatId, "Task details: " + taskDetails);
-            if (taskDetails.get("description") != null) {
-                item.setItemDescription((String) taskDetails.get("description"));
-                sendMessage(chatId, "Description set" + taskDetails.get("description"));
+            if (taskDetails.get("taskName") != null) {
+                item.setItemDescription((String) taskDetails.get("taskName"));
+                sendMessage(chatId, "Description set" + taskDetails.get("taskName"));
             }
-            if (taskDetails.get("deadline") != null) {
-                item.setItemDeadline((OffsetDateTime) taskDetails.get("deadline"));
-                sendMessage(chatId, "Deadline set" + taskDetails.get("deadline"));
+            if (taskDetails.get("taskDeadline") != null) {
+                item.setItemDeadline((OffsetDateTime) taskDetails.get("taskDdeadline"));
+                sendMessage(chatId, "Deadline set" + taskDetails.get("taskDdeadline"));
             }
-            if (taskDetails.get("sprint") != null) {
-                ToDoSprint sprint = (ToDoSprint) taskDetails.get("sprint");
+            if (taskDetails.get("sprintNumber") != null) {
+                ToDoSprint sprint = (ToDoSprint) taskDetails.get("sprintNumber");
                 item.setSprint(sprint);
-                sendMessage(chatId, "Sprint set" + taskDetails.get("sprint"));
+                sendMessage(chatId, "Sprint set" + taskDetails.get("sprintNumber"));
             }
             updateToDoItem(item, taskId);
             sendMessage(chatId, "Task updated successfully." + item.getItemDescription() + item.getItemDeadline() + item.getSprint());

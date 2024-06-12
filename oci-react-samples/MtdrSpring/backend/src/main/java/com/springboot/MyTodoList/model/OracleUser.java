@@ -8,7 +8,7 @@ import java.io.Serializable;
 public class OracleUser implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int user_id;
+    private int id;
 
     @Column(name = "USER_NAME")
     private String user_name;
@@ -29,8 +29,8 @@ public class OracleUser implements Serializable {
     public OracleUser() {
     }
 
-    public OracleUser(int user_id, String user_name, String user_role, String user_chat_id, ToDoTeam team) {
-        this.user_id = user_id;
+    public OracleUser(int id, String user_name, String user_role, String user_chat_id, ToDoTeam team) {
+        this.id = id;
         this.user_name = user_name;
         this.user_role = user_role;
         this.user_chat_id = user_chat_id;
@@ -38,7 +38,7 @@ public class OracleUser implements Serializable {
     }
 
     public int getUserId() {
-        return user_id;
+        return id;
     }
 
     public String getUserName() {
@@ -57,8 +57,8 @@ public class OracleUser implements Serializable {
         return team;
     }
 
-    public void setUserId(int user_id) {
-        this.user_id = user_id;
+    public void setUserId(int id) {
+        this.id = id;
     }
 
     public void setUserName(String user_name) {
@@ -80,7 +80,7 @@ public class OracleUser implements Serializable {
     @Override
     public String toString() {
         return "OracleUser{" +
-                "user_id=" + user_id +
+                "id=" + id +
                 ", user_name='" + user_name + '\'' +
                 ", user_role='" + user_role + '\'' +
                 ", user_chat_id='" + user_chat_id + '\'' +
