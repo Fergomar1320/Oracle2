@@ -37,7 +37,7 @@ public class LangChainService {
 
         List<ChatMessage> messages = new ArrayList<>();
         messages.add(new SystemMessage("Categorize this text in the following categories "
-        + "and calculate date or sprint if needed (sprint MUST BE None if not said): "
+        + "and calculate the date or sprint if needed (sprint MUST BE None if not said): "
         + "Task name, Task deadline, Sprint number"));
         messages.add(new SystemMessage("Today's date: " 
         + today.format(DateTimeFormatter.ofPattern("EEEE MMMM dd, yyyy"))));
