@@ -153,17 +153,17 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
             } else if (messageText.startsWith("/viewTasksForDev ")) {
                 sendMessage(chatId, "Fetching tasks for the Developer...");
                 String userIdString = messageText.substring(17).trim();
-                sendMessage(chatId, "User ID: " + userIdString);
+                //sendMessage(chatId, "User ID: " + userIdString);
                 try {
-                    sendMessage(chatId, "Parsing User ID...");
+                    //sendMessage(chatId, "Parsing User ID...");
                     int userId = Integer.parseInt(userIdString);
-                    sendMessage(chatId, "User ID parsed: " + userId);
+                    //sendMessage(chatId, "User ID parsed: " + userId);
                     OracleUser user = oracleUserService.getUserById(userId);
-                    sendMessage(chatId, "User fetched");
+                    //sendMessage(chatId, "User fetched");
                     if (user != null) {
-                        sendMessage(chatId, "User found");
+                        //sendMessage(chatId, "User found");
                         List<ToDoItem> userTasks = getTasksForUser(user);
-                        sendMessage(chatId, "User tasks fetched: " + userTasks.size());
+                        //sendMessage(chatId, "User tasks fetched: " + userTasks.size());
                         StringBuilder userTasksMessage = new StringBuilder(user.getUserName() + "'s tasks:\n");
                         for (ToDoItem task : userTasks) {
                             userTasksMessage.append("• <b>Task ID:</b>").append(task.getItemId())
@@ -242,7 +242,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
             + "taskId\n/viewMyTasks");
         }
     }
-    
+
     // Utility method to split and send message in chunks
     private void sendSplitMessage(Long chatId, String message) {
         int maxLength = 4096; // Telegram's message size limit
@@ -390,22 +390,22 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
         try {
             ToDoItem newItem = new ToDoItem();
             Map<String, Object> taskDetails = langChainService.categorizeMessage(taskDescription);
-            sendMessage(chatId, "Task details: " + taskDetails); // TODO: Remove this debug message
+            //sendMessage(chatId, "Task details: " + taskDetails); // TODO: Remove this debug message
             newItem.setItemDescription((String) taskDetails.get("taskName"));
             newItem.setItemCreationTs(OffsetDateTime.now());
             newItem.setItemStatus("Not Started");
-            sendMessage(chatId, "Desc, creationTs, status set " + newItem.getItemDescription() + newItem.getItemCreationTs() + newItem.getItemStatus()); // TODO: Remove this debug message
+            //sendMessage(chatId, "Desc, creationTs, status set " + newItem.getItemDescription() + newItem.getItemCreationTs() + newItem.getItemStatus()); // TODO: Remove this debug message
             if (taskDetails.get("taskDeadline") != null) {
                 newItem.setItemDeadline((OffsetDateTime) taskDetails.get("taskDeadline"));
             }
-            sendMessage(chatId, "Deadline set " + newItem.getItemDeadline()); // TODO: Remove this debug message
+            //sendMessage(chatId, "Deadline set " + newItem.getItemDeadline()); // TODO: Remove this debug message
             if (taskDetails.get("sprintNumber") != null) {
                 ToDoSprint sprint = (ToDoSprint) taskDetails.get("sprintNumber");
                 newItem.setSprint(sprint);
             }
-            sendMessage(chatId, "Sprint set " + newItem.getSprint()); // TODO: Remove this debug message
+            //sendMessage(chatId, "Sprint set " + newItem.getSprint()); // TODO: Remove this debug message
             newItem.setUser(user);
-            sendMessage(chatId, "User set " + newItem.getUser()); // TODO: Remove this debug message
+            //sendMessage(chatId, "User set " + newItem.getUser()); // TODO: Remove this debug message
 
             toDoItemService.addToDoItem(newItem);
             sendMessage(chatId, "Task created successfully for user: " 
@@ -425,19 +425,19 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
                 return;
             }
             Map<String, Object> taskDetails = LangChainService.categorizeMessageUpdate(taskDescription);
-            sendMessage(chatId, "Task details: " + taskDetails); // TODO: Remove this debug message
+            //sendMessage(chatId, "Task details: " + taskDetails); // TODO: Remove this debug message
             if (taskDetails.get("taskName") != null) {
                 item.setItemDescription((String) taskDetails.get("taskName"));
-                sendMessage(chatId, "Description set" + taskDetails.get("taskName")); // TODO: Remove this debug message
+                //sendMessage(chatId, "Description set" + taskDetails.get("taskName")); // TODO: Remove this debug message
             }
             if (taskDetails.get("taskDeadline") != null) {
-                item.setItemDeadline((OffsetDateTime) taskDetails.get("taskDeadline"));
-                sendMessage(chatId, "Deadline set" + taskDetails.get("taskDeadline")); // TODO: Remove this debug message
+                //item.setItemDeadline((OffsetDateTime) taskDetails.get("taskDeadline"));
+                //sendMessage(chatId, "Deadline set" + taskDetails.get("taskDeadline")); // TODO: Remove this debug message
             }
             if (taskDetails.get("sprintNumber") != null) {
                 ToDoSprint sprint = (ToDoSprint) taskDetails.get("sprintNumber");
                 item.setSprint(sprint);
-                sendMessage(chatId, "Sprint set" + taskDetails.get("sprintNumber")); // TODO: Remove this debug message
+                //sendMessage(chatId, "Sprint set" + taskDetails.get("sprintNumber")); // TODO: Remove this debug message
             }
             updateToDoItem(item, taskId);
             sendMessage(chatId, "Task updated successfully." + item.getItemDescription() + item.getItemDeadline() + item.getSprint());
