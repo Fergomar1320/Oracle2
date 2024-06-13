@@ -125,43 +125,63 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
     }
 
     private void handleManagerCommands(String messageText, Long chatId) {
-        try{
+        try {
             if (messageText.equals("/start") || messageText.equals(BotLabels.SHOW_MAIN_SCREEN.getLabel())) {
                 sendMainMenu(chatId);
             } else if (messageText.equals("/viewAllTasks")) {
+                sendMessage(chatId, "Fetching all tasks for the Team...");
                 List<ToDoItem> allItems = getAllToDoItems();
-                String allItemsMessage = "";
+                sendMessage(chatId, "All tasks for the Team: " + allItems.size());
+                StringBuilder allItemsMessage = new StringBuilder("All tasks for the Team:\n");
                 for (ToDoItem item : allItems) {
-                    allItemsMessage += "- " + item.getItemId()
-                    + "\n    " + item.getItemDescription()
-                    + "\n    " + item.getUser().getUserName()
-                    + "\n    " + item.getItemStatus()
-                    + "\n    " + item.getItemDeadline()
-                    + "\n    " + item.getSprint().getSprintId()
-                    + "\n"; 
+                    allItemsMessage.append("• <b>Task ID:</b>").append(item.getItemId())
+                                   .append("\n    <b>Description:</b> ").append(item.getItemDescription())
+                                   .append("\n    <b>Status:</b> ").append(item.getItemStatus())
+                                   .append("\n");
+                    if (item.getItemDeadline() != null) {
+                        allItemsMessage.append("    <b>Deadline:</b> ").append(item.getItemDeadline()).append("\n");
+                    } else {
+                        allItemsMessage.append("    <b>Deadline:</b> Not set\n");
+                    }
+                    if (item.getSprint() != null) {
+                        allItemsMessage.append("    <b>Sprint:</b> ").append(item.getSprint().getSprintId()).append("\n");
+                    }
+                    allItemsMessage.append("\n");
                 }
-                sendMessage(chatId, allItemsMessage);
-                // String tasks = allItems.stream().map(ToDoItem::getItemDescription).collect(Collectors.joining("\n"));
-                // sendMessage(chatId, tasks);
-            } else if (messageText.startsWith("/viewTasksForDev ")) { // Deberia tener un espacio al final?
+                sendSplitMessage(chatId, allItemsMessage.toString());
+                sendMessage(chatId, "All tasks for the Team sent.");
+            } else if (messageText.startsWith("/viewTasksForDev ")) {
+                sendMessage(chatId, "Fetching tasks for the Developer...");
                 String userIdString = messageText.substring(17).trim();
+                sendMessage(chatId, "User ID: " + userIdString);
                 try {
+                    sendMessage(chatId, "Parsing User ID...");
                     int userId = Integer.parseInt(userIdString);
+                    sendMessage(chatId, "User ID parsed: " + userId);
                     OracleUser user = oracleUserService.getUserById(userId);
+                    sendMessage(chatId, "User fetched");
                     if (user != null) {
+                        sendMessage(chatId, "User found");
                         List<ToDoItem> userTasks = getTasksForUser(user);
-                        String userTasksMessage = user.getUserName() + "'s tasks:\n";
+                        sendMessage(chatId, "User tasks fetched: " + userTasks.size());
+                        StringBuilder userTasksMessage = new StringBuilder(user.getUserName() + "'s tasks:\n");
                         for (ToDoItem task : userTasks) {
-                            userTasksMessage += "- " + task.getItemId()
-                            + "\n    " + task.getItemDescription()
-                            + "\n    " + task.getItemStatus()
-                            + "\n    " + task.getItemDeadline()
-                            + "\n    " + task.getSprint().getSprintId()
-                            + "\n"; 
+                            userTasksMessage.append("• <b>Task ID:</b>").append(task.getItemId())
+                                            .append("\n    <b>Description:</b> ").append(task.getItemDescription())
+                                            .append("\n    <b>Status:</b> ").append(task.getItemStatus())
+                                            .append("\n");
+                            if (task.getItemDeadline() != null) {
+                                userTasksMessage.append("    <b>Deadline:</b> ").append(task.getItemDeadline()).append("\n");
+                            } else {
+                                userTasksMessage.append("    <b>Deadline:</b> Not set\n");
+                            }
+                            if (task.getSprint() != null) {
+                                userTasksMessage.append("    <b>Sprint:</b> ").append(task.getSprint().getSprintId()).append("\n");
+                            }
+                            userTasksMessage.append("\n");
                         }
-                        sendMessage(chatId, userTasksMessage);
-                        // String tasks = userTasks.stream().map(ToDoItem::getItemDescription).collect(Collectors.joining("\n"));
-                        // sendMessage(chatId, tasks);
+                        sendSplitMessage(chatId, userTasksMessage.toString());
+                        sendMessage(chatId, "User tasks sent.");
                     } else {
                         sendMessage(chatId, "User not found. Please provide a valid user id.");
                     }
@@ -170,15 +190,15 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
                 }
             } else {
                 sendMessage(chatId, "Command or instruction '" + messageText
-                + "' not recognized. Please use one of the following commands: "
-                + "\n/viewAllTasks\n/viewTasksForDev <USER_ID>");
+                        + "' not recognized. Please use one of the following commands: "
+                        + "\n/viewAllTasks\n/viewTasksForDev USER_ID");
             }
         } catch (Exception e) {
             logger.error(e.getLocalizedMessage(), e);
-            sendMessage(chatId, "Failed to process manager command.");
+            sendMessage(chatId, "Failed to process manager command. " + e.getMessage());
         }
     }
-
+            
     private void handleDeveloperCommands(String messageText, Long chatId, OracleUser user) {
         if (messageText.equals("/start") || messageText.equals(BotLabels.SHOW_MAIN_SCREEN.getLabel())) {
             sendMainMenu(chatId);
@@ -194,28 +214,43 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
             int taskId = Integer.parseInt(messageText.substring(10));
             markTaskDone(chatId, taskId);
         } else if (messageText.startsWith("/markInProgress ")) {
-        int taskId = Integer.parseInt(messageText.substring(16));
-        markTaskInProgress(chatId, taskId);
-        } else if (messageText.equals("/viewMyTasks")) {  // Deberia tener un espacio al final?
+            int taskId = Integer.parseInt(messageText.substring(16));
+            markTaskInProgress(chatId, taskId);
+        } else if (messageText.equals("/viewMyTasks")) {
             List<ToDoItem> userTasks = getTasksForUser(user);
-            String tasksMessage = "";
+            StringBuilder tasksMessage = new StringBuilder();
             for (ToDoItem task : userTasks) {
-                tasksMessage += "- " + task.getItemId()
-                + "\n    " + task.getItemDescription()
-                + "\n    " + task.getItemStatus()
-                + "\n    " + task.getItemDeadline()
-                + "\n    " + task.getSprint().getSprintId()
-                + "\n"; 
+                tasksMessage.append("• <b>Task ID:</b>").append(task.getItemId()).append("\n")
+                            .append("    <b>Description:</b> ").append(task.getItemDescription()).append("\n")
+                            .append("    <b>Status:</b> ").append(task.getItemStatus()).append("\n");
+                if (task.getItemDeadline() != null) {
+                    tasksMessage.append("    <b>Deadline:</b> ").append(task.getItemDeadline()).append("\n");
+                } else {
+                    tasksMessage.append("    <b>Deadline:</b> Not set\n");
+                }
+                if (task.getSprint() != null) {
+                    tasksMessage.append("    <b>Sprint:</b> ").append(task.getSprint().getSprintId()).append("\n");
+                }
+                tasksMessage.append("\n");
             }
-            sendMessage(chatId, tasksMessage);
-            // String tasks = userTasks.stream().map(ToDoItem::getItemDescription).collect(Collectors.joining("\n"));
-            // sendMessage(chatId, tasks);
+            sendSplitMessage(chatId, tasksMessage.toString());
         } else {
             sendMessage(chatId, "Command or instruction '" + messageText 
             + "' not recognized. Please use one of the following commands: "
-            + "\n/createTask <taskDescription>\n/updateTask <taskId> "
-            + "<taskDescription>\n/markDone <taskId>\n/markInProgress "
-            + "<taskId>\n/viewMyTasks");
+            + "\n/createTask taskDescription\n/updateTask taskId "
+            + "taskDescription\n/markDone taskId\n/markInProgress "
+            + "taskId\n/viewMyTasks");
+        }
+    }
+    
+    // Utility method to split and send message in chunks
+    private void sendSplitMessage(Long chatId, String message) {
+        int maxLength = 4096; // Telegram's message size limit
+        int start = 0;
+        while (start < message.length()) {
+            int end = Math.min(start + maxLength, message.length());
+            sendMessage(chatId, message.substring(start, end));
+            start = end;
         }
     }
 
@@ -275,6 +310,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 
     private void sendMessage(Long chatId, String text) {
         SendMessage message = new SendMessage();
+        message.enableHtml(true);
         message.setChatId(chatId);
         message.setText(text);
         try {
@@ -373,7 +409,7 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
 
             toDoItemService.addToDoItem(newItem);
             sendMessage(chatId, "Task created successfully for user: " 
-            + user.getUserName() + " with description: " + taskDescription);
+            + user.getUserName() + " with description: " + taskDetails.get("taskName"));
             logger.info("Task created successfully for user: " + user.getUserName());
         } catch (Exception e) {
             logger.error("Failed to create task for user: " + user.getUserName(), e);
@@ -395,8 +431,8 @@ public class ToDoItemBotController extends TelegramLongPollingBot {
                 sendMessage(chatId, "Description set" + taskDetails.get("taskName")); // TODO: Remove this debug message
             }
             if (taskDetails.get("taskDeadline") != null) {
-                item.setItemDeadline((OffsetDateTime) taskDetails.get("taskDdeadline"));
-                sendMessage(chatId, "Deadline set" + taskDetails.get("taskDdeadline")); // TODO: Remove this debug message
+                item.setItemDeadline((OffsetDateTime) taskDetails.get("taskDeadline"));
+                sendMessage(chatId, "Deadline set" + taskDetails.get("taskDeadline")); // TODO: Remove this debug message
             }
             if (taskDetails.get("sprintNumber") != null) {
                 ToDoSprint sprint = (ToDoSprint) taskDetails.get("sprintNumber");

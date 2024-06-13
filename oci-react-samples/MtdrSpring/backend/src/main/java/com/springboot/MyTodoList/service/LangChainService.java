@@ -124,14 +124,14 @@ public class LangChainService {
             deliverSprint = null;
         }
 
-        System.out.println("Extracted Task Details:");
-        System.out.println("Task Name: " + taskNameValidated);
-        System.out.println("Task Deadline: " + deadline);
-        if (sprintNumber <= 0) {
-            System.out.println("Sprint Number: None" + deliverSprint);
-        } else {
-            System.out.println("Sprint Number: " + sprintNumber);
-        }
+        //System.out.println("Extracted Task Details:");
+        //System.out.println("Task Name: " + taskNameValidated);
+        //System.out.println("Task Deadline: " + deadline);
+        //if (sprintNumber <= 0) {
+            //System.out.println("Sprint Number: None" + deliverSprint);
+        //} else {
+            //System.out.println("Sprint Number: " + sprintNumber);
+        //}
 
         Map<String, Object> taskDetails = new HashMap<>();
         taskDetails.put("taskName", taskNameValidated);
